@@ -25,8 +25,16 @@ export default async function handleRequest(req: Request & { nextUrl?: URL }) {
   }
 
   const { pathname, search } = req.nextUrl ? req.nextUrl : new URL(req.url);
-  const url = new URL(pathname + search, "https://api.openai.com").href;
-  const headers = pickHeaders(req.headers, ["content-type", "authorization"]);
+  // Use the environment variable for the proxy URL
+  const proxyBaseUrl = process.env.PROXY_URL || "https://api.openai.com"; // Fallback to a default URL if the environment variable is not set
+  const url = new URL(pathname + search, proxyBaseUrl).href;
+  // Simulate browser request by modifying the headers
+  const newHeaders = new Headers(req.headers);
+  newHeaders.set('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3');
+  newHeaders.set('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8');
+
+  // Use pickHeaders function to include relevant headers
+  const headers = pickHeaders(newHeaders, ["content-type", "authorization"]);
 
   const res = await fetch(url, {
     body: req.body,
